@@ -30,7 +30,7 @@ This project implements a production-ready cryptocurrency data pipeline with a f
 
 ### 2. SQL Table Creation Scripts ✓
 
-**File**: `create_tables.sql`
+**File**: `../sql/create_tables.sql`
 
 **Features**:
 - Complete DDL for all normalized tables
@@ -95,7 +95,7 @@ This project implements a production-ready cryptocurrency data pipeline with a f
 
 ### 5. Star Schema & Databricks Gold Layer ✓
 
-**Files**: `STAR_SCHEMA_DIAGRAM.md`, `star_schema_transformations.sql`, `databricks/crypto_star_schema_pipeline.ipynb`
+**Files**: `STAR_SCHEMA_DIAGRAM.md`, `../sql/star_schema_transformations.sql`, `databricks/crypto_star_schema_pipeline.ipynb`
 
 **Features**:
 - Dimensional model with fact table (`fact_crypto_price_metrics`) plus conformed dimensions
@@ -111,7 +111,7 @@ This project implements a production-ready cryptocurrency data pipeline with a f
 
 ### 6. Data Quality, Security & Automation ✓
 
-**Files**: `src/load_data.py`, `databricks/crypto_star_schema_pipeline.ipynb`, `automation/run_pipeline.sh`, `README.md`
+**Files**: `../src/load_data.py`, `databricks/crypto_star_schema_pipeline.ipynb`, `../src/run_pipeline.sh`, `../README.md`
 
 **Features**:
 - Pre-load validation rejects negative magnitudes, zero prices, and missing identifiers before database writes.
@@ -130,17 +130,25 @@ This project implements a production-ready cryptocurrency data pipeline with a f
 ```
 crypto-data-pipeline/
 ├── README.md                      # Complete setup and usage guide
-├── ER_DIAGRAM.md                  # Entity-relationship documentation ✓
-├── DEDUPLICATION_STRATEGY.md     # Deduplication approach ✓
-├── create_tables.sql              # Database schema creation ✓
-├── example_queries.sql            # Common SQL query examples
-├── generate_diagrams.py           # Visual diagram generator
 ├── requirements.txt               # Python dependencies
-├── landing_zone/                  # Raw data storage
+├── docs/
+│   ├── DEDUPLICATION_STRATEGY.md  # Deduplication approach ✓
+│   ├── ER_DIAGRAM.md              # Entity-relationship documentation ✓
+│   ├── PROJECT_SUMMARY.md         # This file
+│   ├── STAR_SCHEMA_DIAGRAM.md     # Dimensional design ✓
+│   └── databricks/
+│       └── crypto_star_schema_pipeline.ipynb  # Delta Lake pipeline ✓
+├── sql/
+│   ├── create_tables.sql          # Database schema creation ✓
+│   ├── example_queries.sql        # Common SQL query examples
+│   └── star_schema_transformations.sql # Analytics star schema ✓
+├── landing_zone/
 │   └── crypto_prices_sample.json  # Sample ingested data
 └── src/
+    ├── generate_diagrams.py       # Visual diagram generator
     ├── ingest.py                  # API data fetcher
-    └── load_data.py               # ETL script ✓
+    ├── load_data.py               # ETL script ✓
+    └── run_pipeline.sh            # Scheduled orchestration helper
 ```
 
 ## 🔑 Key Technical Decisions
@@ -219,7 +227,7 @@ INDEX (batch_id) ON price_snapshots
 
 ### Setup Database
 ```bash
-psql -U postgres -d crypto_db -f create_tables.sql
+psql -U postgres -d crypto_db -f sql/create_tables.sql
 ```
 
 ### Ingest Data

@@ -28,7 +28,7 @@ cryptocurrencies (reference data)
 price_snapshots (fact) → market_metrics (1:1)
 ```
 
-See `ER_DIAGRAM.md` for full entity documentation and `DEDUPLICATION_STRATEGY.md` for time-bucketing logic.
+See `docs/ER_DIAGRAM.md` for full entity documentation and `docs/DEDUPLICATION_STRATEGY.md` for time-bucketing logic.
 
 ### Gold Layer Star Schema
 
@@ -41,9 +41,9 @@ dim_cryptocurrency   dim_source
 ```
 
 Artifacts:
-- `STAR_SCHEMA_DIAGRAM.md` – dimensional design.
-- `star_schema_transformations.sql` – materializes facts/dimensions in PostgreSQL (`analytics` schema).
-- `databricks/crypto_star_schema_pipeline.ipynb` – Delta Lake implementation with Bronze → Silver → Gold merges.
+- `docs/STAR_SCHEMA_DIAGRAM.md` – dimensional design.
+- `sql/star_schema_transformations.sql` – materializes facts/dimensions in PostgreSQL (`analytics` schema).
+- `docs/databricks/crypto_star_schema_pipeline.ipynb` – Delta Lake implementation with Bronze → Silver → Gold merges.
 
 ## Platform Rationale
 
@@ -68,30 +68,30 @@ Artifacts:
 3. **Database bootstrap**
    ```bash
    psql -U postgres -c "CREATE DATABASE crypto_db;"
-   psql -U postgres -d crypto_db -f create_tables.sql
+  psql -U postgres -d crypto_db -f sql/create_tables.sql
    ```
    Optional analytics schema:
    ```bash
-   psql -U postgres -d crypto_db -f star_schema_transformations.sql
+  psql -U postgres -d crypto_db -f sql/star_schema_transformations.sql
    ```
 
 4. **Run the pipeline locally**
    ```bash
    export DB_PASSWORD=... # or rely on .env
    python src/ingest.py
-   python src/load_data.py
-   ```
-   The helper script `automation/run_pipeline.sh` wraps both steps for scheduling.
+  python src/load_data.py
+  ```
+  The helper script `src/run_pipeline.sh` wraps both steps for scheduling.
 
 5. **Databricks deployment**
-   - Upload the notebook `databricks/crypto_star_schema_pipeline.ipynb`.
+  - Upload the notebook `docs/databricks/crypto_star_schema_pipeline.ipynb`.
    - Configure DBFS mount/secret scopes for `raw_input_path` and database credentials.
    - Execute cells sequentially; the final cell validates duplicates and negative magnitudes.
 
 ## Data Quality & Monitoring
 
 - **Pre-load validation**: `CryptoDataLoader.validate_record` rejects missing IDs, non-positive prices, or negative magnitudes before database insertion, logging failures per batch.
-- **Database constraints**: `create_tables.sql` enforces positive prices, unique `(crypto_id, snapshot_time)` pairs, and referential integrity.
+- **Database constraints**: `sql/create_tables.sql` enforces positive prices, unique `(crypto_id, snapshot_time)` pairs, and referential integrity.
 - **Notebook checks**: The Databricks quality cell fails the run if negative prices, negative market metrics, or null fact measures are detected.
 - **Example log snippet**:
   ```text
@@ -112,10 +112,10 @@ Artifacts:
 
 ### Cron (reference implementation)
 
-1. Make the script executable: `chmod +x automation/run_pipeline.sh`.
+1. Make the script executable: `chmod +x src/run_pipeline.sh`.
 2. Add a cron entry (runs every hour):
    ```cron
-   0 * * * * cd /path/to/crypto-data-pipeline && ./automation/run_pipeline.sh >> logs/pipeline.log 2>&1
+  0 * * * * cd /path/to/crypto-data-pipeline && ./src/run_pipeline.sh >> logs/pipeline.log 2>&1
    ```
 
 ### Translating to Cloud Schedulers
@@ -151,22 +151,25 @@ Artifacts:
 ```
 crypto-data-pipeline/
 ├── README.md
-├── PROJECT_SUMMARY.md
-├── ER_DIAGRAM.md
-├── STAR_SCHEMA_DIAGRAM.md
-├── DEDUPLICATION_STRATEGY.md
-├── create_tables.sql
-├── star_schema_transformations.sql
 ├── requirements.txt
-├── automation/
-│   └── run_pipeline.sh
-├── databricks/
-│   └── crypto_star_schema_pipeline.ipynb
+├── docs/
+│   ├── DEDUPLICATION_STRATEGY.md
+│   ├── ER_DIAGRAM.md
+│   ├── PROJECT_SUMMARY.md
+│   ├── STAR_SCHEMA_DIAGRAM.md
+│   └── databricks/
+│       └── crypto_star_schema_pipeline.ipynb
+├── sql/
+│   ├── create_tables.sql
+│   ├── example_queries.sql
+│   └── star_schema_transformations.sql
 ├── landing_zone/
 │   └── crypto_prices_sample.json
 └── src/
-    ├── ingest.py
-    └── load_data.py
+  ├── generate_diagrams.py
+  ├── ingest.py
+  ├── load_data.py
+  └── run_pipeline.sh
 ```
 
 ## Challenges & Lessons Learned
@@ -177,7 +180,7 @@ crypto-data-pipeline/
 
 ## Contributing & Support
 
-1. Document schema updates in `ER_DIAGRAM.md` and `STAR_SCHEMA_DIAGRAM.md`.
+1. Document schema updates in `docs/ER_DIAGRAM.md` and `docs/STAR_SCHEMA_DIAGRAM.md`.
 2. Mirror any business logic tweaks across SQL and notebook implementations.
 3. Prefer environment variables or secret managers for new connectors.
 
